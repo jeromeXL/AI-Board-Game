@@ -54,11 +54,12 @@ class StudentAgent(Agent):
         start_time = time.time()
         # Moves (Up, Right, Down, Left)
         moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
-        visited = {tuple(my_pos)}
-        state_queue = [(my_pos, self.get_f_value(my_pos, adv_pos, self.cost_of_path))]
+        visited = [my_pos]
+        visited_unique = {my_pos}
+        state_queue = [(my_pos, self.get_f_value(my_pos, adv_pos))]
         is_reached = False
         
-        while len(visited) != max_step and not is_reached:
+        while len(visited_unique) != max_step and not is_reached:
             state_queue = sort_state_queue(state_queue)
             cur_pos = state_queue.pop(0)
             self.cost_of_path += get_manhattan_distance(my_pos, cur_pos)
@@ -67,18 +68,29 @@ class StudentAgent(Agent):
                 if chess_board[x,y,dir]:
                     continue
                 next_pos = cur_pos + move
-                if next_pos == adv_pos or tuple(next_pos) in visited:
+                if next_pos == adv_pos or next_pos in visited_unique:
                     continue
                 if next_pos == adv_pos:
                     is_reached = True
                     break
-                visited.add(tuple(next_pos))
+                visited_unique.add(next_pos)
+                visited.append(next_pos)
                 state_queue.append((next_pos, self.get_f_value(next_pos, adv_pos)))
         time_taken = time.time() - start_time
         
+         # Final portion, pick where to put our new barrier, at random
+        my_pos = visited[1]
+        x,y = my_pos
+        # Possibilities, any direction such that chess_board is False
+        allowed_barriers=[i for i in range(0,4) if not chess_board[x,y,i]]
+        # Sanity check, no way to be fully enclosed in a square, else game already ended
+        assert len(allowed_barriers)>=1 
+        dir = allowed_barriers[np.random.randint(0, len(allowed_barriers))]
         print("My AI's turn took ", time_taken, "seconds.")
 
         return my_pos, dir
+        
+     
 
 def compute_heuristic(position, adv_pos):
     distance = get_manhattan_distance(position, adv_pos)
