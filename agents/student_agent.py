@@ -26,6 +26,10 @@ class StudentAgent(Agent):
             "l": 3,
         }
 
+    def get_f_value(self,position, adv_pos):
+        heuristic_value = compute_heuristic(position, adv_pos)
+        return heuristic_value + self.cost_of_path
+
     def step(self, chess_board, my_pos, adv_pos, max_step):
         """
         Implement the step function of your agent here.
@@ -51,24 +55,30 @@ class StudentAgent(Agent):
         # Moves (Up, Right, Down, Left)
         moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
         visited = {tuple(my_pos)}
-        state_queue = [(my_pos, get_f_value(my_pos, adv_pos, self.cost_of_path))]
+        state_queue = [(my_pos, self.get_f_value(my_pos, adv_pos, self.cost_of_path))]
         is_reached = False
         
-        while state_queue and not is_reached:
+        while len(visited) != max_step and not is_reached:
             state_queue = sort_state_queue(state_queue)
-            cur_pos, cur_step = state_queue.pop(0)
+            cur_pos = state_queue.pop(0)
             self.cost_of_path += get_manhattan_distance(my_pos, cur_pos)
             x,y = cur_pos
-
+            for dir, move in enumerate(moves):
+                if chess_board[x,y,dir]:
+                    continue
+                next_pos = cur_pos + move
+                if next_pos == adv_pos or tuple(next_pos) in visited:
+                    continue
+                if next_pos == adv_pos:
+                    is_reached = True
+                    break
+                visited.add(tuple(next_pos))
+                state_queue.append((next_pos, self.get_f_value(next_pos, adv_pos)))
         time_taken = time.time() - start_time
         
         print("My AI's turn took ", time_taken, "seconds.")
 
         return my_pos, dir
-
-def get_f_value(position, adv_pos, cost_of_path):
-    heuristic_value = compute_heuristic(position, adv_pos)
-    return heuristic_value + cost_of_path
 
 def compute_heuristic(position, adv_pos):
     distance = get_manhattan_distance(position, adv_pos)
