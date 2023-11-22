@@ -61,13 +61,13 @@ class StudentAgent(Agent):
         
         while len(visited_unique) != max_step and not is_reached:
             state_queue = sort_state_queue(state_queue)
-            cur_pos = state_queue.pop(0)
+            cur_pos, f_value = state_queue.pop(0)
             self.cost_of_path += get_manhattan_distance(my_pos, cur_pos)
             x,y = cur_pos
             for dir, move in enumerate(moves):
                 if chess_board[x,y,dir]:
                     continue
-                next_pos = cur_pos + move
+                next_pos = tuple(np.array(cur_pos) + np.array(move))
                 if next_pos == adv_pos or next_pos in visited_unique:
                     continue
                 if next_pos == adv_pos:
@@ -75,8 +75,8 @@ class StudentAgent(Agent):
                     break
                 visited_unique.add(next_pos)
                 visited.append(next_pos)
-                state_queue.append((next_pos, self.get_f_value(next_pos, adv_pos)))
-        time_taken = time.time() - start_time
+                new_element_queue = (next_pos, self.get_f_value(next_pos, adv_pos)) 
+                state_queue.append(new_element_queue)
         
          # Final portion, pick where to put our new barrier, at random
         my_pos = visited[1]
@@ -86,7 +86,9 @@ class StudentAgent(Agent):
         # Sanity check, no way to be fully enclosed in a square, else game already ended
         assert len(allowed_barriers)>=1 
         dir = allowed_barriers[np.random.randint(0, len(allowed_barriers))]
+        time_taken = time.time() - start_time
         print("My AI's turn took ", time_taken, "seconds.")
+
 
         return my_pos, dir
         
