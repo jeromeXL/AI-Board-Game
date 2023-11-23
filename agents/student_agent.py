@@ -25,6 +25,7 @@ class StudentAgent(Agent):
             "d": 2,
             "l": 3,
         }
+        self.moves_taken = 0
 
     def get_f_value(self,position, adv_pos):
         heuristic_value = compute_heuristic(position, adv_pos)
@@ -54,29 +55,36 @@ class StudentAgent(Agent):
         start_time = time.time()
         # Moves (Up, Right, Down, Left)
         moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
-        visited = [my_pos]
-        visited_unique = {my_pos}
+        visited = []
         state_queue = [(my_pos, self.get_f_value(my_pos, adv_pos))]
         is_reached = False
         
-        while len(visited_unique) != max_step and not is_reached:
+        while self.moves_taken <= max_step and not is_reached:
+            pdb.set_trace()
             state_queue = sort_state_queue(state_queue)
+            print("State Queue Start Of Loop")
             cur_pos, f_value = state_queue.pop(0)
+            visited.append(cur_pos)
+            self.moves_taken += 1
             self.cost_of_path += get_manhattan_distance(my_pos, cur_pos)
             x,y = cur_pos
             for dir, move in enumerate(moves):
                 if chess_board[x,y,dir]:
                     continue
                 next_pos = tuple(np.array(cur_pos) + np.array(move))
-                if next_pos == adv_pos or next_pos in visited_unique:
+                print("Cur Position: ", cur_pos)
+                print("Next Position: ", next_pos)
+                print("Adv Position: ", adv_pos)
+                if next_pos == adv_pos or next_pos in visited:
                     continue
                 if next_pos == adv_pos:
                     is_reached = True
                     break
-                visited_unique.add(next_pos)
-                visited.append(next_pos)
                 new_element_queue = (next_pos, self.get_f_value(next_pos, adv_pos)) 
+                pdb.set_trace()
+                print("Next element in queue: ", new_element_queue)
                 state_queue.append(new_element_queue)
+                print("State Queue At End Of Loop: ", state_queue)
         
          # Final portion, pick where to put our new barrier, at random
         my_pos = visited[1]
