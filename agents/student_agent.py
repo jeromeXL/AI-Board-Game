@@ -48,11 +48,12 @@ class StudentAgent(Agent):
 
         Please check the sample implementation in agents/random_agent.py or agents/human_agent.py for more details.
         """
-        pdb.set_trace()
+        #pdb.set_trace()
         # Some simple code to help you with timing. Consider checking 
         # time_taken during your search and breaking with the best answer
         # so far when it nears 2 seconds.
         start_time = time.time()
+        self.moves_taken = 0
         # Moves (Up, Right, Down, Left)
         moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
         visited = []
@@ -60,7 +61,7 @@ class StudentAgent(Agent):
         is_reached = False
         
         while self.moves_taken <= max_step and not is_reached:
-            pdb.set_trace()
+            #pdb.set_trace()
             state_queue = sort_state_queue(state_queue)
             print("State Queue Start Of Loop")
             cur_pos, f_value = state_queue.pop(0)
@@ -81,7 +82,7 @@ class StudentAgent(Agent):
                     is_reached = True
                     break
                 new_element_queue = (next_pos, self.get_f_value(next_pos, adv_pos)) 
-                pdb.set_trace()
+                #pdb.set_trace()
                 print("Next element in queue: ", new_element_queue)
                 state_queue.append(new_element_queue)
                 print("State Queue At End Of Loop: ", state_queue)
