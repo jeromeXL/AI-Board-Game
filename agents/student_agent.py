@@ -18,7 +18,7 @@ class StudentAgent(Agent):
     def __init__(self):
         super(StudentAgent, self).__init__()
         self.name = "StudentAgent"
-        self.cost_of_path=0
+        self.cost_of_path = 0
         self.dir_map = {
             "u": 0,
             "r": 1,
@@ -27,7 +27,7 @@ class StudentAgent(Agent):
         }
         self.moves_taken = 0
 
-    def get_f_value(self,position, adv_pos):
+    def get_f_value(self, position, adv_pos):
         heuristic_value = compute_heuristic(position, adv_pos)
         return heuristic_value + self.cost_of_path
 
@@ -48,8 +48,8 @@ class StudentAgent(Agent):
 
         Please check the sample implementation in agents/random_agent.py or agents/human_agent.py for more details.
         """
-        #pdb.set_trace()
-        # Some simple code to help you with timing. Consider checking 
+        # pdb.set_trace()
+        # Some simple code to help you with timing. Consider checking
         # time_taken during your search and breaking with the best answer
         # so far when it nears 2 seconds.
         start_time = time.time()
@@ -59,18 +59,18 @@ class StudentAgent(Agent):
         visited = []
         state_queue = [(my_pos, self.get_f_value(my_pos, adv_pos))]
         is_reached = False
-        
+
         while self.moves_taken <= max_step and not is_reached:
-            #pdb.set_trace()
+            # pdb.set_trace()
             state_queue = sort_state_queue(state_queue)
-            print("State Queue Start Of Loop")
+            print("State Queue Start Of Loop: ", state_queue)
             cur_pos, f_value = state_queue.pop(0)
             visited.append(cur_pos)
             self.moves_taken += 1
             self.cost_of_path += get_manhattan_distance(my_pos, cur_pos)
-            x,y = cur_pos
+            x, y = cur_pos
             for dir, move in enumerate(moves):
-                if chess_board[x,y,dir]:
+                if chess_board[x, y, dir]:
                     continue
                 next_pos = tuple(np.array(cur_pos) + np.array(move))
                 print("Cur Position: ", cur_pos)
@@ -78,39 +78,38 @@ class StudentAgent(Agent):
                 print("Adv Position: ", adv_pos)
                 if next_pos == adv_pos or next_pos in visited:
                     continue
-                if next_pos == adv_pos:
-                    is_reached = True
-                    break
-                new_element_queue = (next_pos, self.get_f_value(next_pos, adv_pos)) 
-                #pdb.set_trace()
+                # if next_pos == adv_pos:
+                   # is_reached = True
+                  #  break
+                new_element_queue = (
+                    next_pos, self.get_f_value(next_pos, adv_pos))
+                # pdb.set_trace()
                 print("Next element in queue: ", new_element_queue)
                 state_queue.append(new_element_queue)
                 print("State Queue At End Of Loop: ", state_queue)
-        
+
          # Final portion, pick where to put our new barrier, at random
         my_pos = visited[1]
-        x,y = my_pos
+        x, y = my_pos
         # Possibilities, any direction such that chess_board is False
-        allowed_barriers=[i for i in range(0,4) if not chess_board[x,y,i]]
+        allowed_barriers = [i for i in range(0, 4) if not chess_board[x, y, i]]
         # Sanity check, no way to be fully enclosed in a square, else game already ended
-        assert len(allowed_barriers)>=1 
+        assert len(allowed_barriers) >= 1
         dir = allowed_barriers[np.random.randint(0, len(allowed_barriers))]
         time_taken = time.time() - start_time
         print("My AI's turn took ", time_taken, "seconds.")
 
-
         return my_pos, dir
-        
-     
+
 
 def compute_heuristic(position, adv_pos):
     distance = get_manhattan_distance(position, adv_pos)
     return distance
 
+
 def get_manhattan_distance(my_pos, adv_pos):
     return abs(my_pos[0] - adv_pos[0]) + abs(my_pos[1]-adv_pos[1])
 
+
 def sort_state_queue(state_queue):
-    return sorted(state_queue, key = lambda x: x[1])
-
-
+    return sorted(state_queue, key=lambda x: x[1])
