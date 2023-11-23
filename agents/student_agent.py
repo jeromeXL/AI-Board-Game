@@ -57,12 +57,13 @@ class StudentAgent(Agent):
         moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
         visited = []
         state_queue = [(my_pos, self.get_f_value(my_pos, adv_pos))]
-        is_reached = False
 
-        while self.moves_taken <= max_step and not is_reached:
+        while self.moves_taken <= max_step:
             # pdb.set_trace()
             state_queue = sort_state_queue(state_queue)
-            print("State Queue Start Of Loop: ", state_queue)
+            # print("State Queue Start Of Loop: ", state_queue)
+            if (not state_queue):
+                return my_pos, 0
             cur_pos, f_value = state_queue.pop(0)
             visited.append(cur_pos)
             self.moves_taken += 1
@@ -71,22 +72,19 @@ class StudentAgent(Agent):
                 if chess_board[x, y, dir]:
                     continue
                 next_pos = tuple(np.array(cur_pos) + np.array(move))
-                print("Cur Position: ", cur_pos)
-                print("Next Position: ", next_pos)
-                print("Adv Position: ", adv_pos)
-                if next_pos == adv_pos or next_pos in visited:
+                # print("Cur Position: ", cur_pos)
+                # print("Next Position: ", next_pos)
+                # print("Adv Position: ", adv_pos)
+                if next_pos == adv_pos:
                     continue
-                # if next_pos == adv_pos:
-                   # is_reached = True
-                  #  break
-                new_element_queue = (
+                new_element_in_queue = (
                     next_pos, self.get_f_value(next_pos, adv_pos))
                 # pdb.set_trace()
-                print("Next element in queue: ", new_element_queue)
-                state_queue.append(new_element_queue)
-                print("State Queue At End Of Loop: ", state_queue)
+                # print("Next element in queue: ", new_element_in_queue)
+                state_queue.append(new_element_in_queue)
+                # print("State Queue At End Of Loop: ", state_queue)
 
-         # Final portion, pick where to put our new barrier, at random
+        # Final portion, pick where to put our new barrier, at random
         my_pos = visited[1]
         x, y = my_pos
         # Possibilities, any direction such that chess_board is False
