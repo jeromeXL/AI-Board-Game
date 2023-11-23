@@ -26,8 +26,8 @@ class StudentAgent(Agent):
         }
         self.moves_taken = 0
 
-    def get_f_value(self, position, adv_pos):
-        heuristic_value = compute_heuristic(position, adv_pos)
+    def get_f_value(self, position, adv_pos, chess_board):
+        heuristic_value = compute_heuristic(position, adv_pos, chess_board)
         return heuristic_value
 
     def step(self, chess_board, my_pos, adv_pos, max_step):
@@ -56,16 +56,18 @@ class StudentAgent(Agent):
         # Moves (Up, Right, Down, Left)
         moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
         visited = []
-        state_queue = [(my_pos, self.get_f_value(my_pos, adv_pos))]
+        state_queue = [
+            (my_pos, self.get_f_value(my_pos, adv_pos, chess_board))]
 
         while self.moves_taken <= max_step:
             # pdb.set_trace()
-            state_queue = sort_state_queue(state_queue)
+            state_queue = sort_position_queue(state_queue)
             # print("State Queue Start Of Loop: ", state_queue)
             if (not state_queue):
                 return my_pos, 0
             cur_pos, f_value = state_queue.pop(0)
-            visited.append(cur_pos)
+            visited_list_element = (cur_pos, f_value)
+            visited.append(visited_list_element)
             self.moves_taken += 1
             x, y = cur_pos
             for dir, move in enumerate(moves):
@@ -78,14 +80,16 @@ class StudentAgent(Agent):
                 if next_pos == adv_pos:
                     continue
                 new_element_in_queue = (
-                    next_pos, self.get_f_value(next_pos, adv_pos))
+                    next_pos, self.get_f_value(next_pos, adv_pos, chess_board))
                 # pdb.set_trace()
                 # print("Next element in queue: ", new_element_in_queue)
                 state_queue.append(new_element_in_queue)
                 # print("State Queue At End Of Loop: ", state_queue)
 
         # Final portion, pick where to put our new barrier, at random
-        my_pos = visited[1]
+        visited = sort_position_queue(visited)
+        print("VISTED: ", visited)
+        my_pos = visited[1][0]
         x, y = my_pos
         # Possibilities, any direction such that chess_board is False
         allowed_barriers = [i for i in range(0, 4) if not chess_board[x, y, i]]
@@ -98,14 +102,27 @@ class StudentAgent(Agent):
         return my_pos, dir
 
 
-def compute_heuristic(position, adv_pos):
-    distance = get_manhattan_distance(position, adv_pos)
-    return distance
+def compute_heuristic(position, adv_pos, chess_board):
+    heuristic = get_num_walls(position, adv_pos, chess_board)
+    return heuristic
 
 
 def get_manhattan_distance(my_pos, adv_pos):
     return abs(my_pos[0] - adv_pos[0]) + abs(my_pos[1]-adv_pos[1])
 
 
-def sort_state_queue(state_queue):
-    return sorted(state_queue, key=lambda x: x[1])
+def get_num_walls(position, adv_pos, chess_board):
+    num_walls = 0
+    moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
+    x = position[0]
+    y = position[1]
+    for dir, move in enumerate(moves):
+        if chess_board[x, y, dir]:
+            num_walls += 1
+    if (num_walls == 3):
+        return 100
+    return num_walls
+
+
+def sort_position_queue(queue):
+    return sorted(queue, key=lambda x: x[1])
