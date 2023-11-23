@@ -18,7 +18,6 @@ class StudentAgent(Agent):
     def __init__(self):
         super(StudentAgent, self).__init__()
         self.name = "StudentAgent"
-        self.cost_of_path = 0
         self.dir_map = {
             "u": 0,
             "r": 1,
@@ -29,7 +28,7 @@ class StudentAgent(Agent):
 
     def get_f_value(self, position, adv_pos):
         heuristic_value = compute_heuristic(position, adv_pos)
-        return heuristic_value + self.cost_of_path
+        return heuristic_value
 
     def step(self, chess_board, my_pos, adv_pos, max_step):
         """
@@ -67,7 +66,6 @@ class StudentAgent(Agent):
             cur_pos, f_value = state_queue.pop(0)
             visited.append(cur_pos)
             self.moves_taken += 1
-            self.cost_of_path += get_manhattan_distance(my_pos, cur_pos)
             x, y = cur_pos
             for dir, move in enumerate(moves):
                 if chess_board[x, y, dir]:
