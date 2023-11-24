@@ -130,6 +130,7 @@ class StudentAgent(Agent):
 
 
 def compute_heuristic(position, adv_pos, chess_board, max_step):
+    # pdb.set_trace()
     heuristic = 0.5 * get_num_walls(position, adv_pos, chess_board) + 0.5 * \
         get_num_possible_op_moves(position, adv_pos, chess_board, max_step)
     return heuristic
@@ -176,14 +177,14 @@ def get_num_possible_op_moves(position, adv_pos, chess_board, max_step):
     state_queue = [adv_pos]
     visited = []
     moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
-    while state_queue and not opponent_steps <= max_step:
+    while state_queue and opponent_steps <= max_step:
         cur_pos = state_queue.pop(0)
         opponent_steps += 1
         r, c = cur_pos
         for dir, move in enumerate(moves):
             if chess_board[r, c, dir]:
                 continue
-            next_pos = cur_pos + move
+            next_pos = tuple(np.array(cur_pos) + np.array(move))
             if next_pos == position or next_pos in visited:
                 continue
             visited.append(next_pos)
@@ -194,11 +195,14 @@ def get_num_possible_op_moves(position, adv_pos, chess_board, max_step):
 
 
 def pick_wall_direction(my_pos, adv_pos, chess_board, max_step):
-    pdb.set_trace()
     adv_posx, adv_posy = adv_pos
     my_posx, my_posy = my_pos
+    print("My Position: ", my_pos)
+    print("Adv Position: ", adv_pos)
+    print("Max Step: ", max_step)
     allowed_barriers = [i for i in range(
         0, 4) if not chess_board[my_posx, my_posy, i]]
+    print("Allowed Barriers: ", allowed_barriers)
     barrier_opp_move_number_list = []
     for barrier in allowed_barriers:
         copy_chess_board = deepcopy(chess_board)
@@ -206,10 +210,12 @@ def pick_wall_direction(my_pos, adv_pos, chess_board, max_step):
         next_barrier_and_move_num = (barrier, get_num_possible_op_moves(
             my_pos, adv_pos, copy_chess_board, max_step))
         barrier_opp_move_number_list.append(next_barrier_and_move_num)
+    print("Barrier Op Move Num List: ", barrier_opp_move_number_list)
+
     if (barrier_opp_move_number_list):
         sorted_barrier_opp_move_number_list = sorted(
             barrier_opp_move_number_list, key=lambda x: x[1])
-        dir = sorted_barrier_opp_move_number_list[0][1]
+        dir = sorted_barrier_opp_move_number_list[0][0]
     else:
         for direction in allowed_barriers:
             if (not chess_board[adv_posx, adv_posy, direction]):
