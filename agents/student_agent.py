@@ -48,37 +48,55 @@ class StudentAgent(Agent):
         Please check the sample implementation in agents/random_agent.py or agents/human_agent.py for more details.
         """
         # pdb.set_trace()
-        # Some simple code to help you with timing. Consider checking
-        # time_taken during your search and breaking with the best answer
-        # so far when it nears 2 seconds.
         start_time = time.time()
+        # Counter for moves taken in a given turn
         self.moves_taken = 0
         # Moves (Up, Right, Down, Left)
         moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
+        # List of all positions visited
         visited = []
+        # Queue of states of the form (pos, f_value(pos))
         state_queue = [
             (my_pos, self.get_f_value(my_pos, adv_pos, chess_board))]
 
+        # While loop, break if num moves taken is more than max # moves
         while self.moves_taken <= max_step:
             # pdb.set_trace()
+            # Sort Queue of states in increasing order of f-value to convert queue to priority queue
             state_queue = sort_position_queue(state_queue)
             # print("State Queue Start Of Loop: ", state_queue)
+            # If no states in queue, no possible moves
+            # 3 walls are around my_pos and opponent is blocking exit, return my_pos and place wall facing opponent - accepting loss
             if (not state_queue):
-                return my_pos, 0
+                # pdb.set_trace()
+                x, y = my_pos
+                # Get allowed barries, will only be one facing the opponent
+                allowed_barriers = [i for i in range(
+                    0, 4) if not chess_board[x, y, i]]
+                # Return current position and barrier
+                return my_pos, allowed_barriers[0]
+            # Get current position and f-value from front of queue
             cur_pos, f_value = state_queue.pop(0)
+            # Add current position and f-value onto list of visited positions
             visited_list_element = (cur_pos, f_value)
             visited.append(visited_list_element)
+            # Increment number of moves taken
             self.moves_taken += 1
             x, y = cur_pos
+            # Iterate through list of moves
             for dir, move in enumerate(moves):
+                # Check if there is a wall in the direction dir given position x,y
                 if chess_board[x, y, dir]:
                     continue
+                # Compute possible next pos based on move (move current position up down right or left)
                 next_pos = tuple(np.array(cur_pos) + np.array(move))
                 # print("Cur Position: ", cur_pos)
                 # print("Next Position: ", next_pos)
                 # print("Adv Position: ", adv_pos)
+                # Do not allow my agent position to collide with adversary agent position
                 if next_pos == adv_pos:
                     continue
+                # Add next pos as element of queue along with its f-value
                 new_element_in_queue = (
                     next_pos, self.get_f_value(next_pos, adv_pos, chess_board))
                 # pdb.set_trace()
@@ -86,20 +104,24 @@ class StudentAgent(Agent):
                 state_queue.append(new_element_in_queue)
                 # print("State Queue At End Of Loop: ", state_queue)
 
-        # Final portion, pick where to put our new barrier, at random
+        # Sort list of visited positions in search in increasing order of f-value
         visited = sort_position_queue(visited)
         print("VISTED: ", visited)
+        # Pick to move to position with lowest f-value
         my_pos = visited[1][0]
         x, y = my_pos
-        # Possibilities, any direction such that chess_board is False
+        # Get allowed directions for barrier placement
         allowed_barriers = [i for i in range(0, 4) if not chess_board[x, y, i]]
         # Sanity check, no way to be fully enclosed in a square, else game already ended
         assert len(allowed_barriers) >= 1
+        # Get a random direction in which to place barrier
         dir = allowed_barriers[np.random.randint(0, len(allowed_barriers))]
         time_taken = time.time() - start_time
         print("My AI's turn took ", time_taken, "seconds.")
-
+        # Return position to move to and direction to place barrier
         return my_pos, dir
+
+# Compute heuristic of position to move to
 
 
 def compute_heuristic(position, adv_pos, chess_board):
@@ -110,18 +132,27 @@ def compute_heuristic(position, adv_pos, chess_board):
 def get_manhattan_distance(my_pos, adv_pos):
     return abs(my_pos[0] - adv_pos[0]) + abs(my_pos[1]-adv_pos[1])
 
+# Get num walls surrounding a position to move to
+
 
 def get_num_walls(position, adv_pos, chess_board):
+    # Counter for num walls around position to move to
     num_walls = 0
     moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
     x = position[0]
     y = position[1]
+    # Iterate through different moves
     for dir, move in enumerate(moves):
+        # Check if there is a wall in all directions
         if chess_board[x, y, dir]:
+            # Increment num walls
             num_walls += 1
+    # If number of walls is 3, assign arbitrary high number to ensure that this position is not picked as a next move
     if (num_walls == 3):
         return 100
     return num_walls
+
+# Sort a queue of the form [position, f-value(position)] in increasing order
 
 
 def sort_position_queue(queue):
