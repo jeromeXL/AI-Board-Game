@@ -131,8 +131,7 @@ class StudentAgent(Agent):
 
 def compute_heuristic(position, adv_pos, chess_board, max_step):
     # pdb.set_trace()
-    heuristic = 0.5 * get_num_walls(position, adv_pos, chess_board) + 0.5 * \
-        get_num_possible_op_moves(position, adv_pos, chess_board, max_step)
+    heuristic = get_num_walls(position, adv_pos, chess_board)
     return heuristic
 
 
