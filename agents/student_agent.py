@@ -109,7 +109,6 @@ class StudentAgent(Agent):
 
         # Sort list of visited positions in search in increasing order of f-value
         visited = sort_position_queue(visited)
-        # print("VISTED: ", visited)
         # Pick to move to position with lowest f-value
         my_pos = visited[1][0]
         x, y = my_pos
@@ -155,12 +154,6 @@ def get_num_walls(position, adv_pos, chess_board):
         return 100
     return num_walls
 
-# Get manhattan distance between both players
-
-
-def get_manhattan_distance(my_pos, adv_pos):
-    return abs(my_pos[0] - adv_pos[0]) + abs(my_pos[1]-adv_pos[1])
-
 
 # Sort a queue of the form [position, f-value(position)] in increasing order
 
@@ -201,6 +194,7 @@ def pick_wall_direction(my_pos, adv_pos, chess_board, max_step):
     print("Max Step: ", max_step)
     allowed_barriers = [i for i in range(
         0, 4) if not chess_board[my_posx, my_posy, i]]
+    # UP AND DOWN
     print("Allowed Barriers: ", allowed_barriers)
     barrier_opp_move_number_list = []
     for barrier in allowed_barriers:
@@ -216,7 +210,8 @@ def pick_wall_direction(my_pos, adv_pos, chess_board, max_step):
             barrier_opp_move_number_list, key=lambda x: x[1])
         dir = sorted_barrier_opp_move_number_list[0][0]
     else:
-        for direction in allowed_barriers:
-            if (not chess_board[adv_posx, adv_posy, direction]):
-                dir = direction
+        dir = allowed_barriers[np.random.randint(0, len(allowed_barriers))]
+        # for direction in allowed_barriers:
+        #     if (not chess_board[adv_posx, adv_posy, direction]):
+        #         dir = direction
     return dir
