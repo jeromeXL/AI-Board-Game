@@ -103,9 +103,6 @@ def get_num_walls(position, adv_pos, chess_board):
         if chess_board[x, y, dir]:
             # Increment num walls
             num_walls += 1
-    # If number of walls is 3, assign arbitrary high number to ensure that this position is not picked as a next move
-    if num_walls == 3:
-        return 100
     return num_walls
 
 
