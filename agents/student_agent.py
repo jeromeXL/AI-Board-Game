@@ -84,6 +84,7 @@ class StudentAgent(Agent):
             # Increment number of moves taken
             self.moves_taken += 1
             x, y = cur_pos
+            print("Cur Pos: ", cur_pos)
             # Iterate through list of moves
             for dir, move in enumerate(moves):
                 # Check if there is a wall in the direction dir given position x,y
@@ -97,6 +98,8 @@ class StudentAgent(Agent):
                 # Do not allow my agent position to collide with adversary agent position
                 if next_pos == adv_pos:
                     continue
+                print("Move Taken: ", move)
+                print("Next Position: ", next_pos)
                 # Add next pos as element of queue along with its f-value
                 new_element_in_queue = (
                     next_pos,
@@ -130,7 +133,10 @@ class StudentAgent(Agent):
 
 def compute_heuristic(position, adv_pos, chess_board, max_step):
     # pdb.set_trace()
-    heuristic = get_num_walls(position, adv_pos, chess_board)
+    if (get_manhattan_distance(position, adv_pos) > max_step * 4):
+        heuristic = get_manhattan_distance(position, adv_pos)
+    else:
+        heuristic = get_num_walls(position, adv_pos, chess_board)
     return heuristic
 
 
@@ -183,19 +189,26 @@ def get_num_possible_op_moves(position, adv_pos, chess_board, max_step):
             state_queue.append(next_pos)
     return len(visited)
 
+# Get manhattan distance
+
+
+def get_manhattan_distance(my_pos, adv_pos):
+    return abs(my_pos[0] - adv_pos[0]) + abs(my_pos[1]-adv_pos[1])
+
+
 # Pick wall direction after movement
 
 
 def pick_wall_direction(my_pos, adv_pos, chess_board, max_step):
     adv_posx, adv_posy = adv_pos
     my_posx, my_posy = my_pos
-    print("My Position: ", my_pos)
-    print("Adv Position: ", adv_pos)
-    print("Max Step: ", max_step)
+    # print("My Position: ", my_pos)
+    # print("Adv Position: ", adv_pos)
+    # print("Max Step: ", max_step)
     allowed_barriers = [i for i in range(
         0, 4) if not chess_board[my_posx, my_posy, i]]
     # UP AND DOWN
-    print("Allowed Barriers: ", allowed_barriers)
+    # print("Allowed Barriers: ", allowed_barriers)
     barrier_opp_move_number_list = []
     for barrier in allowed_barriers:
         copy_chess_board = deepcopy(chess_board)
@@ -203,7 +216,7 @@ def pick_wall_direction(my_pos, adv_pos, chess_board, max_step):
         next_barrier_and_move_num = (barrier, get_num_possible_op_moves(
             my_pos, adv_pos, copy_chess_board, max_step))
         barrier_opp_move_number_list.append(next_barrier_and_move_num)
-    print("Barrier Op Move Num List: ", barrier_opp_move_number_list)
+    # print("Barrier Op Move Num List: ", barrier_opp_move_number_list)
 
     if (barrier_opp_move_number_list):
         sorted_barrier_opp_move_number_list = sorted(
