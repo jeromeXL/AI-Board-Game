@@ -24,12 +24,6 @@ class StudentAgent(Agent):
             "d": 2,
             "l": 3,
         }
-        self.moves_taken = 0
-
-    def get_f_value(self, position, adv_pos, chess_board, max_step):
-        heuristic_value = compute_heuristic(
-            position, adv_pos, chess_board, max_step)
-        return heuristic_value
 
     def step(self, chess_board, my_pos, adv_pos, max_step):
         """
@@ -50,70 +44,24 @@ class StudentAgent(Agent):
         """
         # pdb.set_trace()
         start_time = time.time()
-        # Counter for moves taken in a given turn
-        self.moves_taken = 0
-        # Moves (Up, Right, Down, Left)
-        moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
-        # List of all positions visited
-        visited = []
+        # print("Current position: ", my_pos)
         # Queue of states of the form (pos, f_value(pos))
-        state_queue = [
-            (my_pos, self.get_f_value(my_pos, adv_pos, chess_board, max_step))]
-
-        # While loop, break if num moves taken is more than max # moves
-        while self.moves_taken <= max_step:
+        state_queue = get_all_pos_reachable_by_priority(
+            my_pos, max_step, chess_board, adv_pos)
+        # If nothing in queue, no moves to make, game is lost
+        if not state_queue:
             # pdb.set_trace()
-            # Sort Queue of states in increasing order of f-value to convert queue to priority queue
-            state_queue = sort_position_queue(state_queue)
-            # print("State Queue Start Of Loop: ", state_queue)
-            # If no states in queue, no possible moves
-            # 3 walls are around my_pos and opponent is blocking exit, return my_pos and place wall facing opponent - accepting loss
-            if not state_queue:
-                # pdb.set_trace()
-                x, y = my_pos
-                # Get allowed barries, will only be one facing the opponent
-                allowed_barriers = [i for i in range(
-                    0, 4) if not chess_board[x, y, i]]
-                # Return current position and barrier
-                return my_pos, allowed_barriers[0]
-            # Get current position and f-value from front of queue
-            cur_pos, f_value = state_queue.pop(0)
-            # Add current position and f-value onto list of visited positions
-            visited_list_element = (cur_pos, f_value)
-            visited.append(visited_list_element)
-            # Increment number of moves taken
-            self.moves_taken += 1
-            x, y = cur_pos
-            print("Cur Pos: ", cur_pos)
-            # Iterate through list of moves
-            for dir, move in enumerate(moves):
-                # Check if there is a wall in the direction dir given position x,y
-                if chess_board[x, y, dir]:
-                    continue
-                # Compute possible next pos based on move (move current position up down right or left)
-                next_pos = tuple(np.array(cur_pos) + np.array(move))
-                # print("Cur Position: ", cur_pos)
-                # print("Next Position: ", next_pos)
-                # print("Adv Position: ", adv_pos)
-                # Do not allow my agent position to collide with adversary agent position
-                if next_pos == adv_pos:
-                    continue
-                print("Move Taken: ", move)
-                print("Next Position: ", next_pos)
-                # Add next pos as element of queue along with its f-value
-                new_element_in_queue = (
-                    next_pos,
-                    self.get_f_value(next_pos, adv_pos, chess_board, max_step),
-                )
-                # pdb.set_trace()
-                # print("Next element in queue: ", new_element_in_queue)
-                state_queue.append(new_element_in_queue)
-                # print("State Queue At End Of Loop: ", state_queue)
+            x, y = my_pos
+            # Get allowed barriers, will only be one facing the opponent
+            allowed_barriers = [i for i in range(
+                0, 4) if not chess_board[x, y, i]]
+            # Return current position and barrier
+            return my_pos, allowed_barriers[0]
 
-        # Sort list of visited positions in search in increasing order of f-value
-        visited = sort_position_queue(visited)
+        # Sort list of states in search in increasing order of f-value
+        sorted_state_queue = sort_position_queue(state_queue)
         # Pick to move to position with lowest f-value
-        my_pos = visited[1][0]
+        my_pos = sorted_state_queue[0][0]
         x, y = my_pos
         # Get allowed directions for barrier placement
         allowed_barriers = [i for i in range(0, 4) if not chess_board[x, y, i]]
@@ -133,7 +81,7 @@ class StudentAgent(Agent):
 
 def compute_heuristic(position, adv_pos, chess_board, max_step):
     # pdb.set_trace()
-    if (get_manhattan_distance(position, adv_pos) > max_step * 4):
+    if (get_manhattan_distance(position, adv_pos) > max_step * 2):
         heuristic = get_manhattan_distance(position, adv_pos)
     else:
         heuristic = get_num_walls(position, adv_pos, chess_board)
@@ -155,9 +103,6 @@ def get_num_walls(position, adv_pos, chess_board):
         if chess_board[x, y, dir]:
             # Increment num walls
             num_walls += 1
-    # If number of walls is 3, assign arbitrary high number to ensure that this position is not picked as a next move
-    if num_walls == 3:
-        return 100
     return num_walls
 
 
@@ -207,7 +152,6 @@ def pick_wall_direction(my_pos, adv_pos, chess_board, max_step):
     # print("Max Step: ", max_step)
     allowed_barriers = [i for i in range(
         0, 4) if not chess_board[my_posx, my_posy, i]]
-    # UP AND DOWN
     # print("Allowed Barriers: ", allowed_barriers)
     barrier_opp_move_number_list = []
     for barrier in allowed_barriers:
@@ -228,3 +172,60 @@ def pick_wall_direction(my_pos, adv_pos, chess_board, max_step):
         #     if (not chess_board[adv_posx, adv_posy, direction]):
         #         dir = direction
     return dir
+
+# Obtain list of all positions that can be reached and compute their f value and store both the positions and f value into a list
+
+
+def get_all_pos_reachable_by_priority(current_pos, max_step, chess_board, adv_pos):
+    x, y = current_pos
+    all_pos_reachable_by_priority = []
+    # Iterate through all positions reachable from current position within max steps
+    for i in range(x - max_step, x + max_step + 1):
+        for j in range(y - max_step, y + max_step + 1):
+            pos_to_move_to = (i, j)
+            # Only add position to list of reachable positions along with its f value if it is reachable via BFS from current position within max steps
+            if (position_is_reachable(current_pos=current_pos, position_to_reach=pos_to_move_to, chess_board=chess_board, adv_pos=adv_pos, max_step=max_step)):
+                # Create new list element of (position_to_move_to, f-value(position_to_move_to))
+                new_pos_and_f_value = (pos_to_move_to, get_f_value(
+                    pos_to_move_to, adv_pos, chess_board, max_step))
+                all_pos_reachable_by_priority.append(new_pos_and_f_value)
+    return all_pos_reachable_by_priority
+
+# Check if position is reachable from current position within max steps
+
+
+def position_is_reachable(current_pos, position_to_reach, chess_board, adv_pos, max_step):
+    # BFS
+    moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
+    state_queue = [(current_pos, 0)]
+    visited = [current_pos]
+    is_reached = False
+    while state_queue and not is_reached:
+        cur_pos, cur_step = state_queue.pop(0)
+        r, c = cur_pos
+        if cur_step == max_step:
+            break
+        for dir, move in enumerate(moves):
+            if chess_board[r, c, dir]:
+                continue
+            next_pos = tuple(np.array(cur_pos) + np.array(move))
+
+            if next_pos == adv_pos or next_pos in visited:
+                continue
+            if next_pos == position_to_reach:
+                is_reached = True
+                break
+
+            visited.append(next_pos)
+            state_queue.append((next_pos, cur_step + 1))
+
+    return is_reached
+
+#  Get f value of a position based on heuristic
+
+
+def get_f_value(position, adv_pos, chess_board, max_step):
+    # Get heuristic value and return as f value
+    heuristic_value = compute_heuristic(
+        position, adv_pos, chess_board, max_step)
+    return heuristic_value
