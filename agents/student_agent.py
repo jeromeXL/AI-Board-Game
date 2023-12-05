@@ -71,7 +71,7 @@ class StudentAgent(Agent):
         dir = pick_wall_direction(my_pos, adv_pos, chess_board, max_step)
         # dir = allowed_barriers[np.random.randint(0, len(allowed_barriers))]
         time_taken = time.time() - start_time
-        print("My AI's turn took ", time_taken, "seconds.")
+        # print("My AI's turn took ", time_taken, "seconds.")
         # Return position to move to and direction to place barrier
         return my_pos, dir
 
@@ -81,7 +81,7 @@ class StudentAgent(Agent):
 
 def compute_heuristic(position, adv_pos, chess_board, max_step):
     # pdb.set_trace()
-    if (get_manhattan_distance(position, adv_pos) > max_step * 2):
+    if (get_manhattan_distance(position, adv_pos) > 2):
         heuristic = get_manhattan_distance(position, adv_pos)
     else:
         heuristic = get_num_walls(position, adv_pos, chess_board)
@@ -115,14 +115,14 @@ def sort_position_queue(queue):
 # Number of moves opponent can do when selecting a potential position to move to
 
 
-def get_num_possible_op_moves(position, adv_pos, chess_board, max_step):
-    opponent_steps = 0
-    state_queue = [adv_pos]
+def get_num_moves_from_pos(position, chess_board, max_step):
+    steps = 0
+    state_queue = [position]
     visited = []
     moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
-    while state_queue and opponent_steps <= max_step:
+    while state_queue and steps <= max_step:
         cur_pos = state_queue.pop(0)
-        opponent_steps += 1
+        steps += 1
         r, c = cur_pos
         for dir, move in enumerate(moves):
             if chess_board[r, c, dir]:
@@ -145,11 +145,13 @@ def get_manhattan_distance(my_pos, adv_pos):
 
 
 def pick_wall_direction(my_pos, adv_pos, chess_board, max_step):
-    adv_posx, adv_posy = adv_pos
     my_posx, my_posy = my_pos
     # print("My Position: ", my_pos)
     # print("Adv Position: ", adv_pos)
     # print("Max Step: ", max_step)
+    num_opp_moves = get_num_moves_from_pos(
+        adv_pos, chess_board, max_step)
+    num_my_moves = get_num_moves_from_pos(my_pos, chess_board, max_step)
     allowed_barriers = [i for i in range(
         0, 4) if not chess_board[my_posx, my_posy, i]]
     # print("Allowed Barriers: ", allowed_barriers)
@@ -157,20 +159,33 @@ def pick_wall_direction(my_pos, adv_pos, chess_board, max_step):
     for barrier in allowed_barriers:
         copy_chess_board = deepcopy(chess_board)
         copy_chess_board[my_posx, my_posy, barrier] = True
-        next_barrier_and_move_num = (barrier, get_num_possible_op_moves(
-            my_pos, adv_pos, copy_chess_board, max_step))
+        next_barrier_and_move_num = (barrier, get_num_moves_from_pos(
+            adv_pos, copy_chess_board, max_step))
         barrier_opp_move_number_list.append(next_barrier_and_move_num)
     # print("Barrier Op Move Num List: ", barrier_opp_move_number_list)
-
-    if (barrier_opp_move_number_list):
-        sorted_barrier_opp_move_number_list = sorted(
-            barrier_opp_move_number_list, key=lambda x: x[1])
+    barrier_my_move_number_list = []
+    for barrier in allowed_barriers:
+        copy_chess_board = deepcopy(chess_board)
+        copy_chess_board[my_posx, my_posy, barrier] = True
+        next_barrier_and_move_num = (barrier, get_num_moves_from_pos(
+            my_pos, copy_chess_board, max_step))
+        barrier_my_move_number_list.append(next_barrier_and_move_num)
+    sorted_barrier_opp_move_number_list = sorted(
+        barrier_opp_move_number_list, key=lambda x: x[1])
+    sorted_barrier_my_move_number_list = sorted(
+        barrier_my_move_number_list, key=lambda x: x[1], reverse=True)
+    num_opp_moves_new = sorted_barrier_opp_move_number_list[0][1]
+    num_my_moves_new = sorted_barrier_my_move_number_list[0][1]
+    diff_my_num_moves = abs(num_my_moves - num_my_moves_new)
+    diff_opp_num_moves = abs(num_opp_moves - num_opp_moves_new)
+    if (diff_my_num_moves > diff_opp_num_moves):
+        dir = sorted_barrier_my_move_number_list[0][0]
+    elif (diff_opp_num_moves > diff_my_num_moves):
         dir = sorted_barrier_opp_move_number_list[0][0]
     else:
-        dir = allowed_barriers[np.random.randint(0, len(allowed_barriers))]
-        # for direction in allowed_barriers:
-        #     if (not chess_board[adv_posx, adv_posy, direction]):
-        #         dir = direction
+        direction_list = [sorted_barrier_my_move_number_list[0]
+                          [0], sorted_barrier_opp_move_number_list[0][0]]
+        dir = np.random.choice(direction_list)
     return dir
 
 # Obtain list of all positions that can be reached and compute their f value and store both the positions and f value into a list
