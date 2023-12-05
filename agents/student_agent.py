@@ -81,17 +81,17 @@ class StudentAgent(Agent):
 
 def compute_heuristic(position, adv_pos, chess_board, max_step):
     # pdb.set_trace()
-    if (get_manhattan_distance(position, adv_pos) > 2):
-        heuristic = get_manhattan_distance(position, adv_pos)
+    if (get_distance(position, adv_pos, chess_board) > 3):
+        heuristic = get_distance(position, adv_pos, chess_board)
     else:
-        heuristic = get_num_walls(position, adv_pos, chess_board)
+        heuristic = get_num_walls(position, adv_pos, chess_board, max_step)
     return heuristic
 
 
 # Get num walls surrounding a position to move to
 
 
-def get_num_walls(position, adv_pos, chess_board):
+def get_num_walls(position, adv_pos, chess_board, max_step):
     # Counter for num walls around position to move to
     num_walls = 0
     moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
@@ -111,6 +111,28 @@ def get_num_walls(position, adv_pos, chess_board):
 
 def sort_position_queue(queue):
     return sorted(queue, key=lambda x: x[1])
+
+# Get actual number of steps between my_pos and adv_pos
+
+
+def get_distance(my_pos, adv_pos, chess_board):
+    state_queue = [(my_pos, 0)]
+    visited = []
+    moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
+    while state_queue:
+        cur_pos, cur_step = state_queue.pop(0)
+        r, c = cur_pos
+        for dir, move in enumerate(moves):
+            if chess_board[r, c, dir]:
+                continue
+            next_pos = tuple(np.array(cur_pos) + np.array(move))
+            if next_pos == adv_pos:
+                return cur_step + 1
+            if next_pos in visited:
+                continue
+            visited.append(next_pos)
+            state_queue.append((next_pos, cur_step + 1))
+    return "hello"
 
 # Number of moves opponent can do when selecting a potential position to move to
 
