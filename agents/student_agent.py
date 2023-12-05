@@ -44,46 +44,80 @@ class StudentAgent(Agent):
         """
         # pdb.set_trace()
         start_time = time.time()
-        # print("Current position: ", my_pos)
-        # Queue of states of the form (pos, f_value(pos))
-        state_queue = get_all_pos_reachable_by_priority(
-            my_pos, max_step, chess_board, adv_pos)
-        # If nothing in queue, no moves to make, game is lost
-        if not state_queue:
-            # pdb.set_trace()
+        if (get_distance(my_pos, adv_pos, chess_board) > max_step):
+            heuristic_choice = "distance"
+            # print("Current position: ", my_pos)
+            # Queue of states of the form (pos, f_value(pos))
+            state_queue = get_all_pos_reachable_by_priority(
+                my_pos, max_step, chess_board, adv_pos, heuristic_choice)
+            # If nothing in queue, no moves to make, game is lost
+            if not state_queue:
+                # pdb.set_trace()
+                x, y = my_pos
+                # Get allowed barriers, will only be one facing the opponent
+                allowed_barriers = [i for i in range(
+                    0, 4) if not chess_board[x, y, i]]
+                # Return current position and barrier
+                return my_pos, allowed_barriers[0]
+
+            # Sort list of states in search in increasing order of f-value
+            sorted_state_queue = sort_position_queue(state_queue)
+            # Pick to move to position with lowest f-value
+            my_pos = sorted_state_queue[0][0]
             x, y = my_pos
-            # Get allowed barriers, will only be one facing the opponent
+            # Get allowed directions for barrier placement
             allowed_barriers = [i for i in range(
                 0, 4) if not chess_board[x, y, i]]
-            # Return current position and barrier
-            return my_pos, allowed_barriers[0]
+            # Sanity check, no way to be fully enclosed in a square, else game already ended
+            assert len(allowed_barriers) >= 1
+            # Get a random direction in which to place barrier
+            dir = pick_wall_direction(my_pos, adv_pos, chess_board, max_step)
+            # dir = allowed_barriers[np.random.randint(0, len(allowed_barriers))]
+            time_taken = time.time() - start_time
+            # print("My AI's turn took ", time_taken, "seconds.")
+            # Return position to move to and direction to place barrier
+            return my_pos, dir
+        else:
+            heuristic_choice = "num_walls"
+            state_queue = get_all_pos_reachable_by_priority(
+                my_pos, max_step, chess_board, adv_pos, heuristic_choice)
+            # If nothing in queue, no moves to make, game is lost
+            if not state_queue:
+                # pdb.set_trace()
+                x, y = my_pos
+                # Get allowed barriers, will only be one facing the opponent
+                allowed_barriers = [i for i in range(
+                    0, 4) if not chess_board[x, y, i]]
+                # Return current position and barrier
+                return my_pos, allowed_barriers[0]
 
-        # Sort list of states in search in increasing order of f-value
-        sorted_state_queue = sort_position_queue(state_queue)
-        # Pick to move to position with lowest f-value
-        my_pos = sorted_state_queue[0][0]
-        x, y = my_pos
-        # Get allowed directions for barrier placement
-        allowed_barriers = [i for i in range(0, 4) if not chess_board[x, y, i]]
-        # Sanity check, no way to be fully enclosed in a square, else game already ended
-        assert len(allowed_barriers) >= 1
-        # Get a random direction in which to place barrier
-        dir = pick_wall_direction(my_pos, adv_pos, chess_board, max_step)
-        # dir = allowed_barriers[np.random.randint(0, len(allowed_barriers))]
-        time_taken = time.time() - start_time
-        # print("My AI's turn took ", time_taken, "seconds.")
-        # Return position to move to and direction to place barrier
-        return my_pos, dir
+            # Sort list of states in search in increasing order of f-value
+            sorted_state_queue = sort_position_queue(state_queue)
+            # Pick to move to position with lowest f-value
+            my_pos = sorted_state_queue[0][0]
+            x, y = my_pos
+            # Get allowed directions for barrier placement
+            allowed_barriers = [i for i in range(
+                0, 4) if not chess_board[x, y, i]]
+            # Sanity check, no way to be fully enclosed in a square, else game already ended
+            assert len(allowed_barriers) >= 1
+            # Get a random direction in which to place barrier
+            dir = pick_wall_direction(my_pos, adv_pos, chess_board, max_step)
+            # dir = allowed_barriers[np.random.randint(0, len(allowed_barriers))]
+            time_taken = time.time() - start_time
+            # print("My AI's turn took ", time_taken, "seconds.")
+            # Return position to move to and direction to place barrier
+            return my_pos, dir
 
 
 # Compute heuristic of position to move to
 
 
-def compute_heuristic(position, adv_pos, chess_board, max_step):
+def compute_heuristic(position, adv_pos, chess_board, max_step, heuristic_choice):
     # pdb.set_trace()
-    if (get_distance(position, adv_pos, chess_board) > 3):
+    if (heuristic_choice == "distance"):
         heuristic = get_distance(position, adv_pos, chess_board)
-    else:
+    elif (heuristic_choice == "num_walls"):
         heuristic = get_num_walls(position, adv_pos, chess_board, max_step)
     return heuristic
 
@@ -211,7 +245,7 @@ def pick_wall_direction(my_pos, adv_pos, chess_board, max_step):
 # Obtain list of all positions that can be reached and compute their f value and store both the positions and f value into a list
 
 
-def get_all_pos_reachable_by_priority(current_pos, max_step, chess_board, adv_pos):
+def get_all_pos_reachable_by_priority(current_pos, max_step, chess_board, adv_pos, heuristic_choice):
     x, y = current_pos
     all_pos_reachable_by_priority = []
     # Iterate through all positions reachable from current position within max steps
@@ -222,7 +256,7 @@ def get_all_pos_reachable_by_priority(current_pos, max_step, chess_board, adv_po
             if (position_is_reachable(current_pos=current_pos, position_to_reach=pos_to_move_to, chess_board=chess_board, adv_pos=adv_pos, max_step=max_step)):
                 # Create new list element of (position_to_move_to, f-value(position_to_move_to))
                 new_pos_and_f_value = (pos_to_move_to, get_f_value(
-                    pos_to_move_to, adv_pos, chess_board, max_step))
+                    pos_to_move_to, adv_pos, chess_board, max_step, heuristic_choice))
                 all_pos_reachable_by_priority.append(new_pos_and_f_value)
     return all_pos_reachable_by_priority
 
@@ -259,8 +293,8 @@ def position_is_reachable(current_pos, position_to_reach, chess_board, adv_pos, 
 #  Get f value of a position based on heuristic
 
 
-def get_f_value(position, adv_pos, chess_board, max_step):
+def get_f_value(position, adv_pos, chess_board, max_step, heuristic_choice):
     # Get heuristic value and return as f value
     heuristic_value = compute_heuristic(
-        position, adv_pos, chess_board, max_step)
+        position, adv_pos, chess_board, max_step, heuristic_choice)
     return heuristic_value
