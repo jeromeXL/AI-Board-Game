@@ -132,36 +132,33 @@ def get_distance(my_pos, adv_pos, chess_board):
                 continue
             visited.append(next_pos)
             state_queue.append((next_pos, cur_step + 1))
-    return "hello"
+    return 0
 
 # Number of moves opponent can do when selecting a potential position to move to
 
 
-def get_num_moves_from_pos(position, chess_board, max_step):
-    steps = 0
-    state_queue = [position]
+def get_num_moves_from_pos(position, chess_board, max_step, my_pos, adv_pos):
+    state_queue = [(position, 0)]
     visited = []
     moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
-    while state_queue and steps <= max_step:
-        cur_pos = state_queue.pop(0)
-        steps += 1
+    while state_queue:
+        cur_pos, cur_step = state_queue.pop(0)
         r, c = cur_pos
+        if cur_step == max_step:
+            break
         for dir, move in enumerate(moves):
             if chess_board[r, c, dir]:
                 continue
             next_pos = tuple(np.array(cur_pos) + np.array(move))
-            if next_pos == position or next_pos in visited:
-                continue
+            if (position == my_pos):
+                if next_pos == adv_pos or next_pos in visited:
+                    continue
+            else:
+                if next_pos == my_pos or next_pos in visited:
+                    continue
             visited.append(next_pos)
-            state_queue.append(next_pos)
+            state_queue.append((next_pos, cur_step + 1))
     return len(visited)
-
-# Get manhattan distance
-
-
-def get_manhattan_distance(my_pos, adv_pos):
-    return abs(my_pos[0] - adv_pos[0]) + abs(my_pos[1]-adv_pos[1])
-
 
 # Pick wall direction after movement
 
@@ -172,8 +169,9 @@ def pick_wall_direction(my_pos, adv_pos, chess_board, max_step):
     # print("Adv Position: ", adv_pos)
     # print("Max Step: ", max_step)
     num_opp_moves = get_num_moves_from_pos(
-        adv_pos, chess_board, max_step)
-    num_my_moves = get_num_moves_from_pos(my_pos, chess_board, max_step)
+        adv_pos, chess_board, max_step, my_pos, adv_pos)
+    num_my_moves = get_num_moves_from_pos(
+        my_pos, chess_board, max_step, my_pos, adv_pos)
     allowed_barriers = [i for i in range(
         0, 4) if not chess_board[my_posx, my_posy, i]]
     # print("Allowed Barriers: ", allowed_barriers)
@@ -182,7 +180,7 @@ def pick_wall_direction(my_pos, adv_pos, chess_board, max_step):
         copy_chess_board = deepcopy(chess_board)
         copy_chess_board[my_posx, my_posy, barrier] = True
         next_barrier_and_move_num = (barrier, get_num_moves_from_pos(
-            adv_pos, copy_chess_board, max_step))
+            adv_pos, copy_chess_board, max_step, my_pos, adv_pos))
         barrier_opp_move_number_list.append(next_barrier_and_move_num)
     # print("Barrier Op Move Num List: ", barrier_opp_move_number_list)
     barrier_my_move_number_list = []
@@ -190,7 +188,7 @@ def pick_wall_direction(my_pos, adv_pos, chess_board, max_step):
         copy_chess_board = deepcopy(chess_board)
         copy_chess_board[my_posx, my_posy, barrier] = True
         next_barrier_and_move_num = (barrier, get_num_moves_from_pos(
-            my_pos, copy_chess_board, max_step))
+            my_pos, copy_chess_board, max_step, my_pos, adv_pos))
         barrier_my_move_number_list.append(next_barrier_and_move_num)
     sorted_barrier_opp_move_number_list = sorted(
         barrier_opp_move_number_list, key=lambda x: x[1])
