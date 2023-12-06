@@ -78,7 +78,7 @@ class StudentAgent(Agent):
             # Return position to move to and direction to place barrier
             return my_pos, dir
         else:
-            heuristic_choice = "num_walls"
+            heuristic_choice = "num_escapes"
             state_queue = get_all_pos_reachable_by_priority(
                 my_pos, max_step, chess_board, adv_pos, heuristic_choice)
             # If nothing in queue, no moves to make, game is lost
@@ -117,27 +117,28 @@ def compute_heuristic(position, adv_pos, chess_board, max_step, heuristic_choice
     # pdb.set_trace()
     if (heuristic_choice == "distance"):
         heuristic = get_distance(position, adv_pos, chess_board)
-    elif (heuristic_choice == "num_walls"):
-        heuristic = get_num_walls(position, adv_pos, chess_board, max_step)
+    elif (heuristic_choice == "num_escapes"):
+        heuristic = get_num_escapes(position, adv_pos, chess_board, max_step)
     return heuristic
 
 
 # Get num walls surrounding a position to move to
 
 
-def get_num_walls(position, adv_pos, chess_board, max_step):
+def get_num_escapes(position, adv_pos, chess_board, max_step):
     # Counter for num walls around position to move to
-    num_walls = 0
-    moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
-    x = position[0]
-    y = position[1]
-    # Iterate through different moves
-    for dir, move in enumerate(moves):
-        # Check if there is a wall in all directions
-        if chess_board[x, y, dir]:
-            # Increment num walls
-            num_walls += 1
-    return num_walls
+    x, y = position
+    max_num_pos_visitable = 0
+    allowed_barriers = [i for i in range(
+        0, 4) if not chess_board[x, y, i]]
+    for barrier in allowed_barriers:
+        copy_chess_board = deepcopy(chess_board)
+        copy_chess_board[x, y, barrier] = True
+        num_pos_visitable = get_my_num_moves_from_pos(
+            my_pos=position, chess_board=copy_chess_board, max_step=max_step, adv_pos=adv_pos)
+        if (num_pos_visitable > max_num_pos_visitable):
+            max_num_pos_visitable = num_pos_visitable
+    return max_num_pos_visitable * -1
 
 
 # Sort a queue of the form [position, f-value(position)] in increasing order
@@ -279,7 +280,7 @@ def get_all_pos_reachable_by_priority(current_pos, max_step, chess_board, adv_po
                         pos_to_move_to, adv_pos, chess_board, max_step, heuristic_choice))
                     all_pos_reachable_by_priority.append(new_pos_and_f_value)
         return all_pos_reachable_by_priority
-    elif (heuristic_choice == "num_walls"):
+    elif (heuristic_choice == "num_escapes"):
         for i in range(advx - max_step, advx + max_step + 1):
             for j in range(advy - max_step, advy + max_step + 1):
                 pos_to_move_to = (i, j)
