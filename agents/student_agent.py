@@ -162,7 +162,7 @@ def get_distance(my_pos, adv_pos, chess_board):
                 continue
             next_pos = tuple(np.array(cur_pos) + np.array(move))
             if next_pos == adv_pos:
-                return cur_step + 1
+                return cur_step
             if next_pos in visited:
                 continue
             visited.append(next_pos)
