@@ -5,7 +5,6 @@ import sys
 import numpy as np
 from copy import deepcopy
 import time
-import pdb
 
 
 @register_agent("student_agent")
@@ -42,8 +41,26 @@ class StudentAgent(Agent):
 
         Please check the sample implementation in agents/random_agent.py or agents/human_agent.py for more details.
         """
-        # pdb.set_trace()
         start_time = time.time()
+        advx, advy = adv_pos
+        allowed_opp_barriers = [i for i in range(
+            0, 4) if not chess_board[advx, advy, i]]
+        if (len(allowed_opp_barriers) == 1):
+            if (allowed_opp_barriers[0] == 0):
+                pos_move_to = (advx - 1, advy)
+                barrier_to_choose = 2
+            elif (allowed_opp_barriers[0] == 2):
+                pos_move_to = (advx + 1, advy)
+                barrier_to_choose = 0
+            elif (allowed_opp_barriers[0] == 1):
+                pos_move_to = (advx, advy + 1)
+                barrier_to_choose = 3
+            elif (allowed_opp_barriers[0] == 3):
+                pos_move_to = (advx, advy - 1)
+                barrier_to_choose = 1
+            if (position_is_reachable(current_pos=my_pos, position_to_reach=pos_move_to, chess_board=chess_board, adv_pos=adv_pos, max_step=max_step)):
+                return pos_move_to, barrier_to_choose
+
         if (get_distance(my_pos, adv_pos, chess_board) > max_step):
             heuristic_choice = "distance"
             # print("Current position: ", my_pos)
@@ -52,7 +69,6 @@ class StudentAgent(Agent):
                 my_pos, max_step, chess_board, adv_pos, heuristic_choice)
             # If nothing in queue, no moves to make, game is lost
             if not state_queue:
-                # pdb.set_trace()
                 x, y = my_pos
                 # Get allowed barriers, will only be one facing the opponent
                 allowed_barriers = [i for i in range(
@@ -74,7 +90,6 @@ class StudentAgent(Agent):
             dir = pick_wall_direction(my_pos, adv_pos, chess_board, max_step)
             # dir = allowed_barriers[np.random.randint(0, len(allowed_barriers))]
             time_taken = time.time() - start_time
-            # print("My AI's turn took ", time_taken, "seconds.")
             # Return position to move to and direction to place barrier
             return my_pos, dir
         else:
@@ -83,7 +98,6 @@ class StudentAgent(Agent):
                 my_pos, max_step, chess_board, adv_pos, heuristic_choice)
             # If nothing in queue, no moves to make, game is lost
             if not state_queue:
-                # pdb.set_trace()
                 x, y = my_pos
                 # Get allowed barriers, will only be one facing the opponent
                 allowed_barriers = [i for i in range(
@@ -114,7 +128,6 @@ class StudentAgent(Agent):
 
 
 def compute_heuristic(position, adv_pos, chess_board, max_step, heuristic_choice):
-    # pdb.set_trace()
     if (heuristic_choice == "distance"):
         heuristic = get_distance(position, adv_pos, chess_board)
     elif (heuristic_choice == "num_escapes"):
