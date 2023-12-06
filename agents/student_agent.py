@@ -248,6 +248,7 @@ def pick_wall_direction(my_pos, adv_pos, chess_board, max_step):
 def get_all_pos_reachable_by_priority(current_pos, max_step, chess_board, adv_pos, heuristic_choice):
     x, y = current_pos
     all_pos_reachable_by_priority = []
+    advx, advy = adv_pos
     # Iterate through all positions reachable from current position within max steps
     if (heuristic_choice == "distance"):
         for i in range(x - max_step, x + max_step + 1):
@@ -261,11 +262,11 @@ def get_all_pos_reachable_by_priority(current_pos, max_step, chess_board, adv_po
                     all_pos_reachable_by_priority.append(new_pos_and_f_value)
         return all_pos_reachable_by_priority
     elif (heuristic_choice == "num_walls"):
-        for i in range(x - max_step, x + max_step + 1):
-            for j in range(y - max_step, y + max_step + 1):
+        for i in range(advx - max_step, advx + max_step + 1):
+            for j in range(advy - max_step, advy + max_step + 1):
                 pos_to_move_to = (i, j)
                 # Only add position to list of reachable positions along with its f value if it is reachable via BFS from current position within max steps
-                if (position_is_reachable(current_pos=current_pos, position_to_reach=pos_to_move_to, chess_board=chess_board, adv_pos=adv_pos, max_step=max_step) and position_is_reachable(current_pos=adv_pos, position_to_reach=pos_to_move_to, chess_board=chess_board, adv_pos=current_pos, max_step=max_step)):
+                if (position_is_reachable(current_pos=current_pos, position_to_reach=pos_to_move_to, chess_board=chess_board, adv_pos=adv_pos, max_step=max_step)):
                     # Create new list element of (position_to_move_to, f-value(position_to_move_to))
                     new_pos_and_f_value = (pos_to_move_to, get_f_value(
                         pos_to_move_to, adv_pos, chess_board, max_step, heuristic_choice))
